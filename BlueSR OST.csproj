@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- Change this to the path of your modded HK installation -->
     <HollowKnightRefs></HollowKnightRefs>
@@ -13,10 +13,10 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyTitle>BlueSR_OST</AssemblyTitle>
     <Product>BlueSR_OST</Product>
-    <Description>Replaces Greenpath, Fungal Wastes, Sealed Vesel fight with BlueSR's version.</Description>
+    <Description>Replaces the Sound Track from Greenpath, Fungal Wastes, Sealed Vesel fight with BlueSR's version.</Description>
     <Copyright>Copyright ©  2026</Copyright>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <FileVersion>1.2.0.0</FileVersion>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
@@ -51,6 +51,9 @@
     </GetFileHash>
     <WriteLinesToFile File="$(ExportDir)/$(TargetName)/SHA.txt" Lines="$(OutputFileString);@(FilesWithHashes->'%(FileHash)');$(OutputZipString);@(ZipFilesWithHashes->'%(FileHash)')" Overwrite="true" Encoding="UTF-8" />
   </Target>
+  <ItemGroup>
+	  <EmbeddedResource Include="BlueSR OST\Resources\bluetrackbundles"/>
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(HollowKnightRefs)/Assembly-CSharp.dll</HintPath>
@@ -323,9 +326,9 @@
       <HintPath>$(HollowKnightRefs)/UnityEngine.XRModule.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include=".gitignore" />
-    <None Include="ReadMe.md" />
-    <None Include="Resources\.gitignore" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Include=".gitignore" />
+		<None Include="ReadMe.md" />
+		<None Include="Resources\.gitignore" />
+	</ItemGroup>
 </Project>
