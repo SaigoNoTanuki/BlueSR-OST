@@ -1,14 +1,18 @@
 BlueSR OST
-1.0.0
+1.2.0
 
 Description:
-Replaces the OSTs in Greenpath, Fungal Wastes and Sealed Vessel fight with BlueSR's version.
+Replaces the Sound Tracks in Greenpath, Fungal Wastes and Sealed Vessel fight with BlueSR's version.
 
-How to use:
-The mod can be toggled On/Off from the "Mods" Option in the Menu.
-The change will take place once the current instance ends or a region change occurs.
+Highlights(1.2.0):
+Reduced required space.
+Use of Asset Bundles rather than loose files
+Fixed a bug that reset the Sound Track on scene change.
+No longer Toggelable (I broke something, will fix in the future)
 
 Credits:
 Mod by: SaigoNoTanuki [https://github.com/SaigoNoTanuki/BlueSR-OST]
+Massive help in the development of the release: maskedcreeper10 [https://github.com/maskedcreeper10]
 Tracks: BlueSR [https://www.youtube.com/@BlueSR]
-UnityWav: deadlyfingers [https://github.com/deadlyfingers/UnityWav]
+UnityWav: deadlyfingers [https://github.com/deadlyfingers/UnityWav][1.2.0+ No longer uses this]
+[A lot of the code is taken from or based off maskedcreeper10's MetalOST and by extension SFGrenade's CustomBgm mod]
