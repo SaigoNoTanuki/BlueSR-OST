@@ -1,78 +1,85 @@
-﻿using HutongGames;
-using HutongGames.PlayMaker;
-using HutongGames.PlayMaker.Actions;
 using Modding;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using UnityEngine;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
-using static UnityEngine.UI.Selectable;
 
 namespace BlueSR_OST
 {
-    public class BlueSR_OST : Mod, ITogglableMod
+    public class BlueSR_OST : Mod
     {
-        private AudioClip customGreenPath;
-        private AudioClip customWastes;
-        private AudioClip customVessel;
-        public BlueSR_OST() : base("BlueSR OST") { }
-        public override string GetVersion() => "1.0.0";
-        private On.AudioManager.hook_ApplyMusicCue _applyMusicCue;
+        private readonly Assembly assembly = Assembly.GetExecutingAssembly();
+        private Dictionary<string, AudioClip> blueTracks = new Dictionary<string, AudioClip>();
+        private readonly Dictionary<string, string> reference = new Dictionary<string, string>()
+        {
+            {"S5 Green Path Bass", "bluePath"},
+            {"S5 Green Path Action", "bluePath"},
+            {"S5 Green Path Main", "bluePath"},
+            {"S61-216 Hollow Knight", "blueVessel"},
+            {"S25 Fungal Wastes MAIN", "blueWastes"},
+            {"S25 Fungal Wastes BASS Mantis", "blueWastes"},
+            {"S25 Fungal Wastes BASS Pizz", "blueWastes"}
+        };
+
+        internal AssetBundle blueTrackBundle = null;
+
+        public BlueSR_OST() : base("BlueSR OST") {
+
+            using (Stream blueStream = assembly.GetManifestResourceStream("BlueSR_OST.Resources.bluetrackbundles"))
+            {
+                if (blueStream != null)
+                {
+                    blueTrackBundle = AssetBundle.LoadFromStream(blueStream);
+                    if (blueTrackBundle != null)
+                    {
+                        Log("Bundle made correctly");
+                        AudioClip[] cliplist = blueTrackBundle.LoadAllAssets<AudioClip>();
+                        foreach (AudioClip clip in cliplist)
+                        {
+                            blueTracks.Add(clip.name, clip);
+                        }
+                        Log("Done storing clips.");
+                    }
+                    else Log("Bundle is null");
+                }
+                else Log("Didn't find blueStream");
+            }
+            
+            Log("Finished Constructing");
+        }
+
+        public override string GetVersion() => "1.2.0";
+
+        private void Hook()
+        {
+            On.AudioManager.BeginApplyMusicCue += AudioSwap;
+        }
 
         public override void Initialize()
         {
-            string modDirectory = Path.GetDirectoryName(typeof(BlueSR_OST).Assembly.Location);
-            string bluePath = Path.Combine(modDirectory, "bluePath.wav");
-            string blueWastes = Path.Combine(modDirectory, "blueWastes.wav");
-            string blueVessel = Path.Combine(modDirectory, "blueVessel.wav");
-
-            byte[] bytesGP = File.ReadAllBytes(bluePath);
-            customGreenPath = WavUtility.ToAudioClip(bytesGP);
-            byte[] bytesFW = File.ReadAllBytes(blueWastes);
-            customWastes = WavUtility.ToAudioClip(bytesFW);
-            byte[] bytesSV = File.ReadAllBytes(blueVessel);
-            customVessel = WavUtility.ToAudioClip(bytesSV);
-
-            _applyMusicCue = (orig, self, cue, delay, transition, fadeIn) =>
-            {
-                if (cue?.name == "Greenpath" && customGreenPath != null)
-                {
-                    cue = ScriptableObject.Instantiate(cue);
-                    AudioSwap(cue, customGreenPath);
-                    Log("Playing: bluePath");
-                }
-                else if(cue?.name == "Fungus" && customWastes != null)
-                {
-                    cue = ScriptableObject.Instantiate(cue);
-                    AudioSwap(cue, customWastes);
-                    Log("Playing: blueWastes");
-                }
-                else if(cue?.name == "HKBattle" && customVessel != null)
-                {
-                    cue = ScriptableObject.Instantiate(cue);
-                    AudioSwap(cue, customVessel);
-                    Log("Playing: blueVessel");
-                }
-                orig(self, cue, delay, transition, fadeIn);
-            };
-            On.AudioManager.ApplyMusicCue += _applyMusicCue;
+            Hook();
         }
-        private void AudioSwap(MusicCue cue, AudioClip customPath)
-        {
-            var channelInfosField = typeof(MusicCue).GetField("channelInfos", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var channelInfos = channelInfosField.GetValue(cue) as MusicCue.MusicChannelInfo[];
-            var clipField = typeof(MusicCue.MusicChannelInfo).GetField("clip", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-            foreach (var channel in channelInfos)
+        private IEnumerator AudioSwap(On.AudioManager.orig_BeginApplyMusicCue orig, AudioManager self, MusicCue musicCue, float delayTime, float transitionTime, bool applySnapshot)
+        {
+            MusicCue.MusicChannelInfo[] infos = ReflectionHelper.GetField<MusicCue, MusicCue.MusicChannelInfo[]>(musicCue, "channelInfos");
+            if (infos != null)
             {
-            clipField.SetValue(channel, customPath);
+                for (int i = 0; i < infos.Length; i++)
+                {
+                    if (infos[i] == null) continue;
+                    AudioClip origAudio = ReflectionHelper.GetField<MusicCue.MusicChannelInfo, AudioClip>(infos[i], "clip");
+                    if (origAudio == null) continue;
+                    if (reference.TryGetValue(origAudio.name, out string replacement) && blueTracks.TryGetValue(replacement, out AudioClip newClip))
+                    {
+                        ReflectionHelper.SetField<MusicCue.MusicChannelInfo, AudioClip>(infos[i], "clip", newClip);
+                        Log($"Replaced '{origAudio.name}' with '{replacement}' on channel {i}");
+                    }
+                }
+                ReflectionHelper.SetField<MusicCue, MusicCue.MusicChannelInfo[]>(musicCue, "channelInfos", infos);
             }
-        }
-        public void Unload()
-        {
-            On.AudioManager.ApplyMusicCue -= _applyMusicCue;
+            yield return orig(self, musicCue, delayTime, transitionTime, applySnapshot);
         }
     }
 }
