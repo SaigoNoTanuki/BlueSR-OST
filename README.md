@@ -8,7 +8,8 @@ Highlights(1.2.0):
 Reduced required space.
 Use of Asset Bundles rather than loose files
 Fixed a bug that reset the Sound Track on scene change.
-No longer Toggelable (I broke something, will fix in the future)
+
+Note: I wasn't able to make this togellable. So that won't be happening.
 
 Credits:
 Mod by: SaigoNoTanuki [https://github.com/SaigoNoTanuki/BlueSR-OST]
